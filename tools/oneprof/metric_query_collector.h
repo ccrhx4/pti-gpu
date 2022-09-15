@@ -217,11 +217,17 @@ class MetricQueryCollector {
     const std::lock_guard<std::mutex> lock(lock_);
     PTI_ASSERT(query_map_.count(command_list) == 1);
     query_map_[command_list].push_back(info);
+
+    std::cout << "cmd_addr:" << reinterpret_cast<uint64_t>(command_list)
+      << ", position:" << (query_map_[command_list].size() - 1) << ", kernerl:"
+      << info.name << std::endl;
   }
 
   void AddQueryMetrics(
+      ze_command_list_handle_t command_list, 
       const std::string& name,
-      const std::vector<uint8_t>& data) {
+      const std::vector<uint8_t>& data,
+      uint32_t pos) {
     PTI_ASSERT(!name.empty());
     PTI_ASSERT(!data.empty());
 
@@ -240,6 +246,11 @@ class MetricQueryCollector {
     PTI_ASSERT(metric_storage_ != nullptr);
     uint32_t size = static_cast<uint32_t>(data.size());
 
+    uint64_t cmd_addr = reinterpret_cast<uint64_t>(command_list);    
+    metric_storage_->Dump(
+        reinterpret_cast<const uint8_t*>(&cmd_addr), sizeof(uint64_t), 0);
+    metric_storage_->Dump(
+        reinterpret_cast<const uint8_t*>(&pos), sizeof(uint32_t), 0);        
     metric_storage_->Dump(
         reinterpret_cast<const uint8_t*>(&kernel_id), sizeof(uint32_t), 0);
     metric_storage_->Dump(
@@ -292,7 +303,7 @@ class MetricQueryCollector {
     return context_map_[command_list];
   }
 
-  void ProcessQuery(const ZeQueryInfo& info) {
+  void ProcessQuery(ze_command_list_handle_t command_list, const ZeQueryInfo& info, uint32_t pos) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     zet_metric_query_handle_t query = info.query;
     PTI_ASSERT(query != nullptr);
@@ -306,21 +317,23 @@ class MetricQueryCollector {
     status = zetMetricQueryGetData(query, &size, data.data());
     PTI_ASSERT(status == ZE_RESULT_SUCCESS);
 
-    AddQueryMetrics(info.name, data);
+    AddQueryMetrics(command_list, info.name, data, pos);
   }
 
   void ProcessCommandList(ze_command_list_handle_t command_list) {
     PTI_ASSERT(command_list != nullptr);
     PTI_ASSERT(query_map_.count(command_list) == 1);
 
+    uint32_t i = 0;
     for (auto& info : query_map_[command_list]) {
       PTI_ASSERT(info.event != nullptr);
       ze_result_t status = zeEventQueryStatus(info.event);
       if (status == ZE_RESULT_SUCCESS) {
-        ProcessQuery(info);
+        ProcessQuery(command_list, info, i);
         event_cache_.ResetEvent(info.event);
         query_cache_.ResetQuery(info.query);
       }
+      i++;
     }
   }
 

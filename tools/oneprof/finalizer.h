@@ -1068,6 +1068,20 @@ class Finalizer {
     while (true) {
       bool ok = true;
 
+      uint64_t cmd_addr = 0;
+      ok = reader->ReadNext(
+          0, sizeof(uint64_t), reinterpret_cast<char*>(&cmd_addr));
+      if (!ok) {
+        break;
+      }
+
+      uint32_t pos = 0;
+      ok = reader->ReadNext(
+          0, sizeof(uint32_t), reinterpret_cast<char*>(&pos));
+      if (!ok) {
+        break;
+      }
+
       uint32_t kernel_id = 0;
       ok = reader->ReadNext(
           0, sizeof(uint32_t), reinterpret_cast<char*>(&kernel_id));
@@ -1108,6 +1122,8 @@ class Finalizer {
       PTI_ASSERT(status == ZE_RESULT_SUCCESS);
 
       std::stringstream header;
+      header << "cmd_addr,";
+      header << "position,";
       header << "Kernel,";
       header << "SubDeviceId,";
       for (auto& metric : metric_list) {
@@ -1118,6 +1134,10 @@ class Finalizer {
 
       for (uint32_t i = 0; i < set_count; ++i) {
         std::stringstream line;
+        line << cmd_addr << ",";
+
+        line << pos << ",";
+
         line << kernel_name << ",";
         line << i << ",";
 
