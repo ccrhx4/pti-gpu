@@ -184,7 +184,7 @@ inline void PrintMetricList(uint32_t device_id) {
       continue;
     }
 
-    std::cout << "Group " << group_id << ": " << group_props.name << " (" <<
+    std::cout << "Group " << group_id << ", Domain " << group_props.domain << ": " << group_props.name << " (" <<
       group_props.description << ")" << std::endl;
     ++group_id;
 
