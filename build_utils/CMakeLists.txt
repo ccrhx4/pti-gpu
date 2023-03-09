@@ -91,11 +91,13 @@ macro(FindOpenCLHeaders TARGET)
                       DEPENDS "${OPENCL_INC_PATH}/CL/cl.h"
                               "${OPENCL_INC_PATH}/CL/cl_gl.h"
                               "${OPENCL_INC_PATH}/CL/cl_version.h"
-                              "${OPENCL_INC_PATH}/CL/cl_platform.h")
+                              "${OPENCL_INC_PATH}/CL/cl_platform.h"
+                              "${OPENCL_INC_PATH}/CL/cl_ext.h")
     add_custom_command(OUTPUT "${OPENCL_INC_PATH}/CL/cl.h"
                               "${OPENCL_INC_PATH}/CL/cl_gl.h"
                               "${OPENCL_INC_PATH}/CL/cl_version.h"
                               "${OPENCL_INC_PATH}/CL/cl_platform.h"
+                              "${OPENCL_INC_PATH}/CL/cl_ext.h"
                       COMMAND "${PYTHON_EXECUTABLE}" "${PTI_CMAKE_MACRO_DIR}/get_cl_headers.py" "${OPENCL_INC_PATH}" "${CMAKE_BINARY_DIR}")
 
     target_include_directories(${TARGET} PUBLIC "${OPENCL_INC_PATH}")
