@@ -967,10 +967,13 @@ class Finalizer {
     MetricReader* reader = MetricReader::Create(
         sub_device_list.size(), data_->pid, "bin", path);
     PTI_ASSERT(reader != nullptr);
+    
+    int kernel_interval_list_index = 0;
 
     for (const auto& kernel_interval : data_->kernel_interval_list) {
       bool reported = false;
       const auto& device_interval_list = kernel_interval.device_interval_list;
+      
       for (const auto& device_interval : device_interval_list) {
         uint32_t sub_device_id = device_interval.sub_device_id;
         PTI_ASSERT(sub_device_id < sub_device_list.size());
@@ -1004,7 +1007,9 @@ class Finalizer {
         if (report_count > 0) {
           reported = true;
           std::stringstream header;
-          header << "Kernel,";
+          header << "cmd_addr,";
+          header << "position,";
+	  header << "Kernel,";
           header << "SubDeviceId,";
           header << "KernelTime[ns],";
           for (auto& metric : metric_list) {
@@ -1019,7 +1024,11 @@ class Finalizer {
           uint64_t kernel_time = device_interval.end - device_interval.start;
 
           std::stringstream line;
-          line << kernel_name << ",";
+
+	  line << kernel_interval_list_index << ",";
+          line << kernel_interval.kernel_id << ",";
+
+	  line << kernel_name << ",";
           line << device_interval.sub_device_id << ",";
           line << kernel_time << ",";
           const zet_typed_value_t* report =
@@ -1032,6 +1041,8 @@ class Finalizer {
           logger_.Log(line.str());
         }
       }
+
+      kernel_interval_list_index = kernel_interval_list_index + 1;
 
       if (reported) {
         logger_.Log("\n");
